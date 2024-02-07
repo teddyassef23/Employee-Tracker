@@ -100,9 +100,7 @@ async function addNewEmployee() {
   titles =await getRoles()
     .then((resalets) => {
       roles = resalets.map(({ id, title }) => ({ [id]: title }));;
-      // titles = resalets.map(( role ) => (role['title'] ));
       console.log("roles  :", roles);
-      // console.log("title  :", titles);.map((str) => parseInt(str, 10));
 
     });
 
@@ -122,8 +120,7 @@ async function addNewEmployee() {
       type: "list",
       name: "role",
       message: "What is employee role?",
-      choices: roles
-    }
+      choices: roles['id']
 
 
   ];
@@ -141,7 +138,7 @@ async function addNewEmployee() {
   //   const titles = results.map(result => result['title']);
 
 
-  console.log("Add employee titles :", titles);
+  console.log("Add employee titles :", roles);
 
 
 
