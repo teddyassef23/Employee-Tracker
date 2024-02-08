@@ -18,8 +18,6 @@ const db = mysql.createConnection(
 );
 
 
-
-
 // Query database
 
 async function getRoles() {
@@ -34,7 +32,39 @@ async function getRoles() {
   const [rows, fields] = await conn.execute('select id, title from  role');
   await conn.end();
 
-  console.log(" this is from get ", rows);
+  return rows;
+
+
+}
+async function getDepartment() {
+  const conn = await mysqlpromise.createConnection({
+    host: 'localhost',
+    // MySQL username,
+    user: 'root',
+    // MySQL password
+    password: 'root',
+    database: 'employee_db'
+  });
+  const [rows, fields] = await conn.execute('select id, title from  role');
+  await conn.end();
+
+  return rows;
+}
+
+
+
+async function getManager() {
+  const conn = await mysqlpromise.createConnection({
+    host: 'localhost',
+    // MySQL username,
+    user: 'root',
+    // MySQL password
+    password: 'root',
+    database: 'employee_db'
+  });
+  const [rows] = await conn.execute('SELECT * FROM employee where id in (SELECT distinct  manager_id from employee)');
+  await conn.end();
+
   return rows;
 }
 
@@ -50,6 +80,10 @@ function viewAllEmployees() {
 
 
 }
+
+
+  // INSERT INTO role (title, salary, department_id) VALUES('Accounting', 1000 , 3);
+
 function viewAllDepartments() {
 
   db.query('SELECT * FROM department', function (err, results) {
@@ -94,16 +128,76 @@ async function addDepartment() {
 }
 
 
+async function addRole(){
+ let departmantsName;
+ let departmants;
+
+
+ await getManager()
+    .then((results) => {
+      departmants = results;
+      departmantsName = departmants.map(({ id, name}) => { return name });
+   console.log(departmants);
+    });
+    const questionsDepartment = [
+      {
+        type: "input",
+        name: "frist_name",
+        message: "What is the Frist name of the Employee?",
+      },
+      {
+        type: "input",
+        name: "last_name",
+        message: "What is the Last name of the Employee?",
+      },
+      {
+        type: "list",
+        name: "role",
+        message: "What is employee role?",
+        choices:  []
+      }
+  
+    ];
+
+
+  console.log(departmants);
+  console.log(departmantsName);
+
+  
+   answers = await inquirer.prompt(questionsDepartment);
+
+  db.query(`INSERT INTO role (title, salary, department_id) VALUES('Accounting', 1000 , 3) `,
+  async function (err, results) {
+
+    
+  });
+}
+
+
 async function addNewEmployee() {
-  let roles //= ['IT', 'sales', 'account', 'service'];
+  let roles ;
+  let titles;
+  let managers;
+  let managerNames
 
-  titles =await getRoles()
+
+await getRoles()
     .then((resalets) => {
-      roles = resalets.map(({ id, title }) => ({ [id]: title }));;
-      console.log("roles  :", roles);
-
+      roles = resalets;
+        titles = resalets.map(({ id, title }) => {
+          return  title });
     });
 
+await getManager()
+    .then((results) => {
+      managers = results;
+      managerNames = results.map(({ id,frist_name, last_name  }) => {
+          return frist_name  +' ' + last_name  });
+    });
+
+
+
+    
 
   const questions = [
     {
@@ -120,36 +214,30 @@ async function addNewEmployee() {
       type: "list",
       name: "role",
       message: "What is employee role?",
-      choices: roles['id']
-
+      choices: titles 
+    },
+    {
+      type: "list",
+      name: "managerFullName",
+      message: "Who is employee manager's Name?",
+      choices: managerNames 
+    }
 
   ];
-  //   // console.log(" Add new employee : ",roles);
 
-  //    titles = roles.map(( role ) => ( role.title ));
-  //  console.log("title colsol :", title);
-
-  // });
-
-  //===================================================
-
-  // db.query('SELECT id, title FROM role ', async function (err, results) {
-
-  //   const titles = results.map(result => result['title']);
-
-
-  console.log("Add employee titles :", roles);
-
-
-
+  
   let answers = await inquirer.prompt(questions);
 
-  db.query(`INSERT INTO employee (frist_name, last_name, role_id, manager_id)) VALUES('${answers.frist_name}','${answers.last_name}','${answers.title_name}','${answers.manager_name}') `, async function (err, results) { });
+  const roleId = roles.filter((role) => role['title'] === answers.role).map((role) => role['id']);
+  const managerId = managers.filter((manager) => manager['frist_name'] + ' ' + manager['last_name'] == answers.managerFullName).map((manager) => manager['id']);
+
+   
 
 
-  //   db.query (`INSERT INTO employee (frist_name, last_name,role_id, manager_id) VALUES('${answers.frist_name}', '${answers.last_name}', '${departnemts}','${answers.manager_name}') `, 
-
-  //   async function (err, results){ 
+  db.query(`INSERT INTO employee (frist_name, last_name, role_id, manager_id) VALUES('${answers.frist_name}','${answers.last_name}',${roleId[0]},${managerId[0]}) `,
+   async function (err, results) {
+    if (err) console.error(err);
+   });
 
 
 }
@@ -241,6 +329,7 @@ async function create() {
         await addDepartment();
         break;
       case "add a role":
+        await addRole();
         break;
       case "Add New Employee":
         await addNewEmployee();
