@@ -45,10 +45,24 @@ async function getDepartment() {
     password: 'root',
     database: 'employee_db'
   });
-  const [rows, fields] = await conn.execute('select id, title from  role');
+  const [rows] = await conn.execute('select * from  department');
   await conn.end();
 
   return rows;
+}
+async function getEmployee() {
+  const conn = await mysqlpromise.createConnection({
+    host: 'localhost',
+    // MySQL username,
+    user: 'root',
+    // MySQL password
+    password: 'root',
+    database: 'employee_db'
+  });
+  const [employees] = await conn.execute('select * from  employee');
+  await conn.end();
+
+  return employees;
 }
 
 
@@ -133,40 +147,51 @@ async function addRole(){
  let departmants;
 
 
- await getManager()
+ await getDepartment()
     .then((results) => {
       departmants = results;
-      departmantsName = departmants.map(({ id, name}) => { return name });
-   console.log(departmants);
+      departmantsName = results.map(({id, name }) => { return  name });
+  //  console.log(departmantsName);
     });
-    const questionsDepartment = [
-      {
+ 
+
+
+    const questionsDepartment = [   
+       {
         type: "input",
-        name: "frist_name",
-        message: "What is the Frist name of the Employee?",
+        name: "postion",
+        message: "The Title of the postion?",
       },
-      {
+       {
         type: "input",
-        name: "last_name",
-        message: "What is the Last name of the Employee?",
+        name: "salary",
+        message: "The Salary of the postion?",
+      
       },
-      {
+      
+       {
         type: "list",
-        name: "role",
-        message: "What is employee role?",
-        choices:  []
+        name: "departmant",
+        message: "What is the Title of the departmant ?",
+        choices: departmantsName
       }
+         
+     
+    
   
     ];
 
 
-  console.log(departmants);
-  console.log(departmantsName);
+  // console.log(departmants);
+  // console.log(departmantsName);
 
   
    answers = await inquirer.prompt(questionsDepartment);
+   const department_id = departmants.filter((departmant) => departmant['name'] === answers.departmant).map((departmant) => departmant['id']);
 
-  db.query(`INSERT INTO role (title, salary, department_id) VALUES('Accounting', 1000 , 3) `,
+console.log( department_id[0]);
+
+  db.query(`INSERT INTO role (title, salary, department_id) VALUES('${answers.postion}',${answers.salary} , ${department_id[0]}) `,
   async function (err, results) {
 
     
